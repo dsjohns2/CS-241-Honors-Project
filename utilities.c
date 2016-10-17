@@ -29,7 +29,7 @@ int main (){
 }*/
 
 char * toBin (int n, char * buffer, int bits_per_component){
-	buffer = (char*)realloc (buffer, sizeof(int)*8+1);
+	buffer = (char*)realloc (buffer, sizeof(int)*8+1+1);
 	buffer[0]=0;
 	for (int c = sizeof(int)*8-1; c >= 0; c--){
 		if ((n>>c) & 1)
