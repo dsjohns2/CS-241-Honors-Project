@@ -28,13 +28,15 @@ int main (){
 	return 0;
 }*/
 
-char * toBin (int n, char * buffer, int bits_per_pix){
+char * toBin (int n, char * buffer, int bits_per_component){
 	buffer = (char*)realloc (buffer, sizeof(int)*8+1);
 	buffer[0]=0;
-	for (int c = sizeof(int)*8-1; c >= 0; c--)
+	for (int c = sizeof(int)*8-1; c >= 0; c--){
 		if ((n>>c) & 1)
 			strcat (buffer, "1");
 		else
 			strcat (buffer, "0");
+		if (c==bits_per_component) strcat (buffer, " ");
+	}
 	return buffer;
 }
