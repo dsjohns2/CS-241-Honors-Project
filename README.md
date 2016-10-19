@@ -9,7 +9,8 @@
 
 To compile:
 	g++ yourFile.cpp lodepng.cpp -o OutputFileName
-
+	
+	g++ encodePNG.cpp -o OutputFileName
 To load images from the internet :
 	wget imageURL
 
