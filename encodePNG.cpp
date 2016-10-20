@@ -21,13 +21,13 @@
 
 #include <assert.h>
 
-#define BITS_PER_PIX 5 // parameter
+#define BITS_PER_PIX 8 // parameter
 #define DEBUG 0
 
 #define CAN_BE_USED ((unsigned)((0b1<<BITS_PER_PIX)-1)) // deffinitely correct
 #define SIGNIFICANT ((unsigned)(~CAN_BE_USED))			// for little endian machines
 
-char * debug1 = NULL; char * debug2 = NULL;
+char * debug1, * debug2;
 
 // 1 if close
 unsigned compare (std::vector<unsigned char> image, unsigned index1, unsigned index2){
@@ -54,15 +54,13 @@ void streamEncoder (const char * ballastImage, FILE * secretStream, const char *
 	unsigned width, height, error;
 	error = lodepng::decode (image, width, height, ballastImage);	// Decode png to vector
 	unsigned pixelIndex = 0;
-	int character  = 0; // any value != EOF == -1
-	while (character !=-1 && pixelIndex < width*height){
-		character = fgetc (secretStream);
+	char character  = 0; // any value != EOF == -1
+	while (fread (&character, sizeof(character), 1, secretStream) && pixelIndex < width*height){
 
-//assert (character == (int)(char)character);
 if (DEBUG) printf ("Character is %i = %s\n", character, toBin (character, &debug2, 0));
 if (DEBUG) printf ("Echar %c %s\n", character, toBin(character, &debug1, BITS_PER_PIX));
 
-		for (unsigned bitsDone=0; bitsDone<sizeof(int)*8/*bits per byte*/; bitsDone+=BITS_PER_PIX){
+		for (unsigned bitsDone=0; bitsDone<sizeof(character)*8/*bits per byte*/; bitsDone+=BITS_PER_PIX){
 			unsigned newPixel = (SIGNIFICANT & image[pixelIndex]) | (CAN_BE_USED & character);
 
 if (DEBUG) printf ("   ---pixel change---\n   from %s\n    to  %s\n", toBin (image[pixelIndex], &debug1, BITS_PER_PIX), toBin (newPixel, &debug2, BITS_PER_PIX));
@@ -84,17 +82,20 @@ void streamDecoder (const char * packageImage, FILE * secretStream){
 
 	unsigned pixelIndex = 0;
 	while (pixelIndex < width*height){
-		int character = 0;
-		for (int bitsDone=0; bitsDone<sizeof(int)*8/*bits per byte*/; bitsDone+=BITS_PER_PIX){
+		char character = 0;
+		for (int bitsDone=0; bitsDone<sizeof(character)*8/*bits per byte*/; bitsDone+=BITS_PER_PIX){
 			int newBits = image[pixelIndex] & CAN_BE_USED;
 			character = character | (newBits<<bitsDone);
 			pixelIndex++;
 		}
-		if (character==EOF) break;
+//		if (character==EOF) break;
+fwrite (&character, sizeof(character), 1, secretStream);
 		// !!! UNCOMMENT ME AND TRY TO FIX !!!
-		fputc(character, secretStream);
-//		if (fputc(character, secretStream))
+//		fputc(character, secretStream);
+//		if (fputc(character, secretStream)){
+//			printf ("char %i %c", character, character);
 //			errorMsg ((char*)"Decoder: Could not write to file.");
+//		}
 	}
 }
 
@@ -102,12 +103,22 @@ int main(int argc, char *argv[]){
 	assert (CAN_BE_USED + SIGNIFICANT == (unsigned)(~(unsigned)0));
 	assert ((CAN_BE_USED & SIGNIFICANT) == 0);
 	assert (sizeof(int)==sizeof(unsigned));
-	FILE * secretStream = fopen ("ZrpZy2a.jpg", "r");
-	streamEncoder ("husky.png", secretStream, "output2.png");
+
+	char * secretFile, * ballastImage;
+	if (argc>1)
+		secretFile = argv[1];
+		else secretFile = inputPrompt ((char*) "The secret file: ");
+	if (argc>2)
+		ballastImage = argv[2];
+		else ballastImage = (char*) "husky.png";
+	char * packageImage = (char*) "packed.png";
+	char * extractedImage = (char*) "got.png";
+	FILE * secretStream = fopen (secretFile, "r");
+	streamEncoder (ballastImage, secretStream, packageImage);
 	fclose (secretStream);
 
-	FILE * outSecretStream = fopen ("surprise.jpg", "w+");
-	streamDecoder ("output2.png", outSecretStream);
+	FILE * outSecretStream = fopen (extractedImage, "w+");
+	streamDecoder (packageImage, outSecretStream);
 	fclose (outSecretStream);
 
 
