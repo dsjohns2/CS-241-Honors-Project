@@ -20,5 +20,5 @@ To copy binary info like images..
 To two compare PNG's:
 	compare -compose src image1.png image2.png difference.png
 	
-Google Drive folder (with with Proposal)
+Google Drive folder (with Proposal)
 	https://drive.google.com/drive/u/0/folders/0B1Eyz6Uk-13mRHIxSkdXdVNKV3c
