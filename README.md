@@ -5,7 +5,7 @@
                       Dan Johnson       <dsjohns2@illinois.edu>
                       Rishabh Asthana   <asthana4@illinois.edu>
           Mentor      Ben Kurtovic      <kurtovc2@illinois.edu>
-# Regular meetings: 		Tuesdays at 6-7pm in Siebel 0214.
+# Regular meetings: 		Tuesdays at 6-7pm.
 
 To compile:
 	g++ yourFile.cpp lodepng.cpp -o OutputFileName
