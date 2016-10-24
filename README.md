@@ -1,10 +1,10 @@
 # CS241 Honors (CS296-41) Project: Steganography Toolset
 
 # Members
-          Mentor      Ben Kurtovic      <kurtovc2@illinois.edu>
           Students    Anton Bershanskiy <bershan2@illinois.edu>
                       Dan Johnson       <dsjohns2@illinois.edu>
                       Rishabh Asthana   <asthana4@illinois.edu>
+          Mentor      Ben Kurtovic      <kurtovc2@illinois.edu>
 # Regular meetings: 		Tuesdays at 6-7pm in Siebel 0214.
 
 To compile:
