@@ -15,7 +15,8 @@ void condensed_encoder(char* encode_str){
     int cur_char_idx = 0;
     int num_spaces;
     while((bytes_read = getline(&line, &n, file_to_encode)) != -1){
-        line[bytes_read-1] = 0;
+        char* cur_line = strdup(line);
+        cur_line[bytes_read-1] = 0;
         char cur_char = encode_str[cur_char_idx];
         cur_char = toupper(cur_char);
         if(cur_char != 0){
@@ -37,16 +38,17 @@ void condensed_encoder(char* encode_str){
                 printf("Invalid character\n");
                 break;
             }
-            int org_line_length = strlen(line);
-            line = realloc(line, org_line_length+num_spaces+1);
+            int org_line_length = strlen(cur_line);
+            cur_line = realloc(cur_line, org_line_length+num_spaces+1);
             int i;
             for(i=org_line_length; i<org_line_length+num_spaces; i++){
-                line[i] = ' ';
+                cur_line[i] = ' ';
             }
-            line[i] = 0;
+            cur_line[i] = 0;
+            cur_char_idx++;
         }
-        fprintf(encoded_file, "%s\n", line);
-        cur_char_idx++;
+        fprintf(encoded_file, "%s\n", cur_line);
+        free(cur_line);
     }
     if(encode_str[cur_char_idx] != 0){
         //Did not reach end of encode_str
