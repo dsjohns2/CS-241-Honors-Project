@@ -39,9 +39,9 @@ int main(int argc, char** argv)
 {
 
  //USAGE-----------
- if(argc != 4)
+ if(argc != 4 && argc != 3)
   {
-   printf("Usage : ./name.. <encode/decode> <inputFile/orginalFile> <outputFile/encodedFile>\n");
+   printf("Usage : ./Whisper <encode/decode/info> <inputFile/orginalFile/File> <outputFile/encodedFile/NULL>\n");
    exit(1);
   }
 
@@ -50,8 +50,20 @@ int main(int argc, char** argv)
  wav_meta_data data;
  //Open the .wav File
  FILE* file = fopen(argv[2], "r");
+   	if(file == NULL)
+	{
+	 perror("Input File failed to open\n");
+	 exit(2);
+	}
  //Read the meta_data from file into memory
  fread(&data, sizeof(wav_meta_data), 1, file);
+
+ if(strcmp("info", argv[1]) == 0)
+ {
+  printInfo(data);
+  fclose(file);
+  exit(1);
+ }
  //Create output file.
  FILE* outputFile = NULL;
 
@@ -62,6 +74,11 @@ int main(int argc, char** argv)
  printf("Encoding...\n");
  flag = 0;
  outputFile = fopen(argv[3], "w");
+   	if(outputFile == NULL)
+	{
+	 perror("Output File failed to be created\n");
+	 exit(2);
+	}
  fwrite(&data, sizeof(wav_meta_data), 1, outputFile);
  }
  else
@@ -69,19 +86,33 @@ int main(int argc, char** argv)
   flag = 1;
   printf("Decoding..\n");
   outputFile = fopen(argv[3], "r");
+  	if(outputFile == NULL)
+	{
+	 perror("Encoded File failed to open\n");
+	 exit(2);
+	}
   //Decoder and Encode require file streams to be pointing at the start of the data section.
   fseek(outputFile, sizeof(wav_meta_data), SEEK_SET);
  }
 
  //Print metadata info
- printInfo(data);
+ //printInfo(data);
 
  //Message we are encoding.....
- char plainText[13] = "Hello World!";
+ char plainText[] = "Hello World!";
 
  //ENCODE
  if(flag == 0)
- encode(file, outputFile, plainText, data.dataSize);
+ {
+ char* buffer = NULL;
+ size_t len = 0;
+ printf("Enter the string to encode : "); 
+ getline(&buffer, &len, stdin);
+	//Remove newline character appended when user presses enter.
+ 	if(buffer[strlen(buffer) - 1] == '\n')
+	 buffer[strlen(buffer) - 1] = '\0';
+ encode(file, outputFile, buffer, data.dataSize);
+ }
  //DECODE
  else if(flag == 1)
  decoder(outputFile, file, data.dataSize);
@@ -143,19 +174,18 @@ void encode(FILE* input, FILE* output, char* plainText, int32_t fileSize)
  size_t i = 0;
  size_t length = strlen(plainText);
  
- int buffer[1];
+ int16_t buffer[1];
  while(bytesWritten <= fileSize)
  {
   //Read an int from original audio file
-  fread(&buffer, sizeof(int), 1, input);
-  	
+  fread(&buffer, sizeof(int16_t), 1, input);
   //Encoding character wise., just adding the ASCII value for now..  	
-	if(count < length)
-    	buffer[0] += plainText[count];
+ 	if(count < length)
+  	buffer[0] += plainText[count];
   
   //Write an int to new audio file
-  fwrite(&buffer, sizeof(int), 1, output);
-  bytesWritten += 1;
+  fwrite(&buffer, sizeof(int16_t), 1, output);
+  bytesWritten += 2;
   count++;
  }
  
@@ -170,18 +200,20 @@ void encode(FILE* input, FILE* output, char* plainText, int32_t fileSize)
 void decoder(FILE* encodedFile, FILE* originalFile, int32_t fileSize)
 {
  size_t counter = 0;
- int encoded;
- int original;
- while(counter != 13)
+ size_t noInfo = 0;
+ int16_t encoded;
+ int16_t original;
+ while(noInfo < 10)
  {
   	counter++;
   	//Read an int from encoded audio
-  	fread(&encoded, sizeof(int), 1, encodedFile);
+  	fread(&encoded, sizeof(int16_t), 1, encodedFile);
 	//Read an int from orginal audio
-  	fread(&original, sizeof(int), 1, originalFile);
-  	int val = encoded - original;
+  	fread(&original, sizeof(int16_t), 1, originalFile);
+  	int16_t val = encoded - original;
  	 	if(val != 0)
   	 	putchar(val);
+                else noInfo++;
  }
 putchar('\n');
 }
