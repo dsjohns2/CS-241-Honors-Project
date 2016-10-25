@@ -23,7 +23,7 @@ void my_encoder(const char* filename, char* in){
         if(i%8 == 0){
             j++;
         }
-        
+
         //Break if out of characters to encode
         if(j==strlen(in)){
             break;
