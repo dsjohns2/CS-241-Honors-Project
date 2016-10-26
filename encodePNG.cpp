@@ -7,12 +7,15 @@
 #include "lodepng.cpp" // to make compilation simpler
 #include "lodepng.h"
 
-#include "utilities.c"
+//#include "utilities.c"
 
 #include <vector>
 //#include <stdio.h>
 //#include <stdlib.h>
 //#include <iostream>
+
+char * toBin (int n, char ** buffer, int bits_per_component);
+
 
 #define BITS_PER_PIX 4 // parameter
 #define DEBUG 0
@@ -31,7 +34,6 @@ unsigned compare (std::vector<unsigned char> image, unsigned index1, unsigned in
 unsigned variation (std::vector<unsigned char> image, unsigned index, unsigned width, unsigned height){
 	unsigned line   = index / width;
 	unsigned column = index % width;
-	char result = 1;
 	if (   (      line     && compare (image, index, index-width))	// above
 		|| (      column   && compare (image, index, index-1))		// left
 		|| (line<height-1   && compare (image, index, index+width))	// below
@@ -76,7 +78,7 @@ void streamDecoder (const char * packageImage, FILE * secretStream){
 	unsigned pixelIndex = 0;
 	while (pixelIndex < width*height){
 		char character = 0;
-		for (int bitsDone=0; bitsDone<sizeof(character)*8/*bits per byte*/; bitsDone+=BITS_PER_PIX){
+		for (unsigned int bitsDone=0; bitsDone<sizeof(character)*8/*bits per byte*/; bitsDone+=BITS_PER_PIX){
 			int newBits = image[pixelIndex] & CAN_BE_USED;
 			character = character | (newBits<<bitsDone);
 			pixelIndex++;

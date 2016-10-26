@@ -3,6 +3,8 @@
 // Ask Anton Bershanskiy
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
 
 // Pseudo-random string generation
 // Not secure for cryptographic purposes, but creates high-entropy data

@@ -4,6 +4,9 @@
 // Oct 15-18
 
 #include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 // Endiedness of the system: Bigendien vs littleendian
 // 1 if little endian, 0 if big endian

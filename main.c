@@ -6,15 +6,17 @@
 
 //#include "utilities.c"
 
-#include "encrypt.c"
-#include "encodePNG.cpp"
+//#include "encrypt.c"
+//#include "encodePNG.cpp"
 //
 // The "UI" stuff for the encoder
+void streamEncoder (const char * ballastImage, FILE * secretStream, const char * saveAs);
+void streamDecoder (const char * packageImage, FILE * secretStream);
+char * inputPrompt (char * message);
+
+
 
 int main(int argc, char *argv[]){
-	assert (CAN_BE_USED + SIGNIFICANT == (unsigned)(~(unsigned)0));
-	assert ((CAN_BE_USED & SIGNIFICANT) == 0);
-	assert (sizeof(int)==sizeof(unsigned));
 
 	char * secretFile, * ballastImage, * packageImage, * outputFile;
 	if (argc==1){
@@ -66,6 +68,5 @@ int main(int argc, char *argv[]){
 	fclose (original);
 	fclose (result);
 */	
-	if (DEBUG){ free (debug1); free (debug2); }
 	return 0;
 }
