@@ -4,24 +4,17 @@
 	Written: Oct 15-18
 */
 
-// Generalization of my_encoder.cpp
-// Currently has a bug (or a few) so that it correctly encodes
-// only the EOF and messes up all other characters (but the number of them is correct).
-
 #include "lodepng.cpp" // to make compilation simpler
 #include "lodepng.h"
 
-#include "encrypt.c"
 #include "utilities.c"
 
 #include <vector>
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <iostream>
 
-#include <assert.h>
-
-#define BITS_PER_PIX 8 // parameter
+#define BITS_PER_PIX 4 // parameter
 #define DEBUG 0
 
 #define CAN_BE_USED ((unsigned)((0b1<<BITS_PER_PIX)-1)) // deffinitely correct
@@ -97,40 +90,4 @@ fwrite (&character, sizeof(character), 1, secretStream);
 //			errorMsg ((char*)"Decoder: Could not write to file.");
 //		}
 	}
-}
-
-int main(int argc, char *argv[]){
-	assert (CAN_BE_USED + SIGNIFICANT == (unsigned)(~(unsigned)0));
-	assert ((CAN_BE_USED & SIGNIFICANT) == 0);
-	assert (sizeof(int)==sizeof(unsigned));
-
-	char * secretFile, * ballastImage;
-	if (argc>1)
-		secretFile = argv[1];
-		else secretFile = inputPrompt ((char*) "The secret file: ");
-	if (argc>2)
-		ballastImage = argv[2];
-		else ballastImage = (char*) "husky.png";
-	char * packageImage = (char*) "packed.png";
-	char * extractedImage = (char*) "got.png";
-	FILE * secretStream = fopen (secretFile, "r");
-	streamEncoder (ballastImage, secretStream, packageImage);
-	fclose (secretStream);
-
-	FILE * outSecretStream = fopen (extractedImage, "w+");
-	streamDecoder (packageImage, outSecretStream);
-	fclose (outSecretStream);
-
-
-
-/*
-	//	compare files
-	FILE * original = fopen ("secretMessage.txt", "r");
-	FILE * result   = fopen ("~secretMessage.txt", "r");
-	dump_and_compare (original, result);
-	fclose (original);
-	fclose (result);
-*/	
-	if (DEBUG){ free (debug1); free (debug2); }
-	return 0;
 }
