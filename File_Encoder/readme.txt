@@ -1,7 +1,5 @@
 This program encodes the user input into a file.
-It puts a number of spaces after each line that 
-corresponds to a character. So, it is ideally 
-used for encoding data into files like .c files.
-There are many things wrong with this like how
-easy it is to see that there are a bunch of 
-spaces after each line.
+It can encode itslef as spaces after the line or
+into the variables as binary data where 0 
+corresponds to a camelCasedVariable and 1 
+corresponds to an underscored_variable.
