@@ -1,3 +1,5 @@
+//#include <stdio.h>
+
 char foo(void)
 {
     return '1';
@@ -14,13 +16,13 @@ int func(int in)
     return 12;
 }
 
-int main(int include_this)
+int main(int include_this_var)
 {
     auto char* multi = "a multi";
     char* include_this = "not_this_though";    
-    long butThisIs;
-    butThisIsIncluded = 14;
-    int var_a = 0; 
+    long butThisIs = 32;
+    long butThisIsIncluded = 14;
+    int var_a = 32; 
     int var_b; 
     int var_c;
     int var_d;
@@ -124,5 +126,6 @@ int main(int include_this)
     int var_xxxx;
     int var_yyyy;
     int var_zzzz;
+    printf("output: %d\n", var_a);
     return butThisIs;
 }
