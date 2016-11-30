@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <Python.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 void space_encoder(char* encode_str){
     //Open file
@@ -97,7 +99,7 @@ char* camelCaser(char* var){
                 }
             }
             for(unsigned long m = w+1; m<strlen(word_token); m++){
-                if(isalpha(word_token[m]+32)){
+                if(isalpha(word_token[m]+32) && isdigit(word_token[m]) == 0){
                     word_token[m] = word_token[m]+32;
                 }
             }
@@ -236,9 +238,10 @@ void variable_encoder(char* argv[], char* encode_str){
     }
 
     //Loop through variable arrays to change the target c code
-    FILE* encoded_file = fopen("output_temp.c", "w+");
-    dup2(fileno(encoded_file), fileno(stdout));
+    FILE* encoded_file;
     for(int i=0; i<good_var_count; i++){
+        FILE* write_to_file = fopen("output_write.c", "w");
+        dup2(fileno(write_to_file), fileno(stdout));
         char* oldvar = oldvars[i];
         char* newvar = newvars[i];
         fprintf(stderr, "%s -> %s\n", oldvars[i], newvars[i]);
@@ -256,10 +259,16 @@ void variable_encoder(char* argv[], char* encode_str){
         FILE* python_code2 = fopen("./parser/pycparser/change_var.py", "r");
         PyRun_SimpleFile(python_code2, "./parser/pycparser/change_var.py");
         Py_Finalize();
-        fseek(encoded_file, 0, SEEK_SET);
+        fclose(write_to_file);
+        pid_t child = fork();
+        if(child == 0){
+            execlp("cp", "cp", "./output_write.c", "./output_temp.c", NULL);
+        }
+        wait(NULL);
     }
 
     //Get rid of newlines at the end of the file
+    encoded_file = fopen("output_temp.c", "r");
     FILE* output_file = fopen("output.c", "w");
     fseek(encoded_file, 0, SEEK_SET);
     while(getline(&lineptr, &n, encoded_file) != -1){
@@ -293,6 +302,7 @@ void variable_encoder(char* argv[], char* encode_str){
 
     //Cleanup
     remove("./output_temp.c");
+    remove("./output_write.c");
     remove("./.variables");
     remove("./.good_variables");
         //TODO: clean up the arrays
