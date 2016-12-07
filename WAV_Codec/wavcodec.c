@@ -91,6 +91,7 @@ int main(int argc, char** argv)
  if(count == 10)
  {
   printf("Invalid wav audio format, data/fmt subchunk not found\n");
+  cleanUp();
   exit(1);
  }
 
@@ -104,6 +105,7 @@ int main(int argc, char** argv)
  if(output == NULL)
  {
   perror("Error opening output file\n");
+  cleanUp();  
   exit(1);
  }
 
@@ -132,6 +134,7 @@ int main(int argc, char** argv)
   if(output == NULL)
   {
    perror("Unable to create new file\n");
+   cleanUp();
    exit(1);
   }
   decode(input, output);
@@ -152,6 +155,7 @@ void verifyWavheader(wav_subchunk wav)
     wav.RIFF[2] != 'F' ||
     wav.RIFF[3] != 'F') {
   printf("Not a RIFF file\n");
+  cleanUp();
   exit(2);
   }
  
@@ -160,6 +164,7 @@ void verifyWavheader(wav_subchunk wav)
     wav.WAVE[2] != 'V' ||
     wav.WAVE[3] != 'E') {
   printf("Not a WAVE file\n");
+  cleanUp();
   exit(2);
   }
  fileSize = wav.fileSize;
@@ -207,6 +212,12 @@ void printBytes(char* buffer, size_t numBytes)
  printf("\n");
 }
 
+void cleanUp()
+{
+ free(fmt);
+ free(data);
+}
+
 //Encoder
 void encode(FILE* input, FILE* output, FILE* message)
 {
@@ -243,6 +254,10 @@ void encode(FILE* input, FILE* output, FILE* message)
   if(numRemaining < samplesUsed * size )
   {
   printf("Message too big, Insufficient padding available\n");
+  cleanUp();
+  fclose(input);
+  fclose(output);
+  fclose(message);
   exit(3);
   }
 
@@ -370,6 +385,7 @@ void decode(FILE* input, FILE* output)
   if(numRemaining < samplesUsed * size )
   {
   printf("There was a problem decoding the file\n");
+  cleanUp();
   exit(3);
   }
 
