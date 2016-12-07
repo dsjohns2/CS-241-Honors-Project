@@ -1,5 +1,5 @@
 /*
-WAV encoder/decoder
+Variable data density WAV encoder/decoder
 */
 
 #include <stdio.h>
@@ -7,6 +7,9 @@ WAV encoder/decoder
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+//Set debug to 1 to display additional information
+int debug = 0;
 
 //WAV subchunk struct
 typedef struct wav_subchunk
@@ -50,7 +53,7 @@ void printBytes(char*, size_t);
 int findSubchunk(subchunk, FILE*);
 void encode(FILE*, FILE*, FILE*);
 void decode(FILE*, FILE*);
-
+void cleanUp();
 
 //MAIN
 int main(int argc, char** argv)
@@ -216,7 +219,28 @@ void encode(FILE* input, FILE* output, FILE* message)
   int32_t size = fileStat.st_size; 
   int32_t numRemaining = data->chunkSize/sizeof(int16_t);
 
-  if(data->chunkSize/sizeof(int16_t) < 8 * size )
+  if(debug == 1){			
+  printf("Samples available : %d\n", numRemaining);
+  printf("Size of message : %d\n", size);
+  }
+
+  int samplesUsed = 8; 	//This means using 8 samples to store 1 byte of data (best case scenario)
+			//So if samples used is 1, we are using 1 sample to store 1 byte of data(worst case scenario)
+   
+  while(1)
+  {
+   if(samplesUsed == 1) break;	
+
+   if(numRemaining > size * samplesUsed)
+   break;
+   else 
+   samplesUsed /= 2;
+  }
+
+  if(debug == 1)
+  printf("Samples used : %d\n", samplesUsed);
+  
+  if(numRemaining < samplesUsed * size )
   {
   printf("Message too big, Insufficient padding available\n");
   exit(3);
@@ -250,8 +274,29 @@ void encode(FILE* input, FILE* output, FILE* message)
      inputSample |= bit;
      fwrite(&inputSample, sizeof(int16_t), 1, output) ;
      numRemaining--;
-    }
+     }
   }
+
+
+  int shiftVal = 8/samplesUsed;
+  char globalMask = 0x01;
+  //If 8 samples are used
+  int16_t inputMask = 0xFFFE;
+  if(samplesUsed == 4){
+  globalMask = 0x02;
+  inputMask = 0xFFFC;
+  }
+  if(samplesUsed == 2){
+  globalMask = 0x0F;
+  inputMask = 0xFFF0;
+  }
+  if(samplesUsed == 1){
+  globalMask = 0xFF;
+  inputMask = 0xFF00;
+  }
+
+  if(debug == 1)
+  printf("Shift val : %d\n", shiftVal);
 
  //Encode message data into the next valid "size" samples
   for(i = 0; i < size; i++)
@@ -259,25 +304,25 @@ void encode(FILE* input, FILE* output, FILE* message)
   char current_byte;
   fread(&current_byte, sizeof(char), 1, message);
   int j = 0;
-    for(j = 0; j < 8; j++) //For every bit in a byte
+    for(j = 0; j < 8; j += shiftVal) //For every bit in a byte
     {
-     char mask = 0x01;
+     char mask = globalMask;
      mask <<= j;
      char bit = mask & current_byte;
      bit >>= j;
      //If 10000000 is right shifted
-     bit &= 0x01;
+     //bit &= 0x01;
      //Encode bit into image
      int16_t inputSample;
      fread(&inputSample, sizeof(int16_t), 1, input);
 
      //Make lsb 0
-     inputSample &= 0xFFFE; 
+     inputSample &= inputMask; 
      //Encode lsb
      inputSample |= bit;
 
      fwrite(&inputSample, sizeof(int16_t), 1, output) ;
-     numRemaining--;
+      numRemaining--;
     }
   }
 
@@ -294,6 +339,7 @@ void decode(FILE* input, FILE* output)
 {
  fseek(input, headerSize, SEEK_SET);
  fseek(output, 0, SEEK_SET);
+ int32_t numRemaining = data->chunkSize/sizeof(int16_t);
 
  //Extract the size from first 32 valid samples
  int32_t size = 0x00000000;
@@ -308,17 +354,55 @@ void decode(FILE* input, FILE* output)
    bit <<= i;
    size |= bit;
   }
+ 
+  int samplesUsed = 8;
+   
+  while(1)
+  {
+   if(samplesUsed == 1) break;
+
+   if(numRemaining > size * samplesUsed)
+   break;
+   else 
+   samplesUsed /= 2;
+  }
+  
+  if(numRemaining < samplesUsed * size )
+  {
+  printf("There was a problem decoding the file\n");
+  exit(3);
+  }
+
+  if(debug == 1)
+  printf("Samples used : %d\n", samplesUsed);
+  
+  int shiftVal = 8/samplesUsed;
+  char mask = 0x01;
+  //If 8 samples are used
+  int16_t inputMask = 0xFFFE;
+  if(samplesUsed == 4){
+  mask = 0x02;
+  inputMask = 0xFFFC;
+  }
+  if(samplesUsed == 2){
+  mask = 0x0F;
+  inputMask = 0xFFF0;
+  }
+  if(samplesUsed == 1){
+  mask = 0x0001;
+  inputMask = 0xFF00;
+  }
 
  //Extract data from next "size" valid samples and write them onto output file
   for(i = 0; i < size ; i++)
   {
   char c = 0x00;
   int j = 0;
-    for(j = 0; j < 8; j++) //For every bit in a byte
+    for(j = 0; j < 8; j += shiftVal) //For every samplesUsed * bit(s) in a byte
     { 
      int16_t current_byte; 
      fread(&current_byte, sizeof(int16_t), 1, input) ;
-     char bit = 0x0001 & current_byte;  
+     char bit = mask & current_byte;  
      bit <<= j;
      c |= bit;
     }
